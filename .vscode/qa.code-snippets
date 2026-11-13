@@ -1,0 +1,83 @@
+{
+  "Page Object completa": {
+    "scope": "java",
+    "prefix": "qpage",
+    "body": [
+      "package com.qa.pages;",
+      "",
+      "import org.openqa.selenium.By;",
+      "import org.openqa.selenium.WebDriver;",
+      "",
+      "public class ${TM_FILENAME_BASE} extends BasePage {",
+      "",
+      "\t// Locators",
+      "\tprivate final By ${1:elemento} = By.${2|id,xpath,cssSelector,name|}(\"$3\");",
+      "",
+      "\tpublic ${TM_FILENAME_BASE}(WebDriver driver) {",
+      "\t\tsuper(driver);",
+      "\t}",
+      "",
+      "\t@Override",
+      "\tprotected String ruta() {",
+      "\t\treturn \"${4:/ruta}\";",
+      "\t}",
+      "",
+      "\t// Acciones",
+      "\t$0",
+      "}"
+    ],
+    "description": "Clase Page Object completa"
+  },
+  "Clase de Test completa": {
+    "scope": "java",
+    "prefix": "qtest",
+    "body": [
+      "package com.qa.tests;",
+      "",
+      "import com.qa.pages.${1:LoginPage};",
+      "import org.testng.Assert;",
+      "import org.testng.annotations.Test;",
+      "",
+      "public class ${TM_FILENAME_BASE} extends BaseTest {",
+      "",
+      "\t@Test(description = \"${2:descripcion}\")",
+      "\tpublic void ${3:nombreTest}() {",
+      "\t\t$1 page = new $1(driver);",
+      "\t\tpage.abrir();",
+      "\t\t$0",
+      "\t}",
+      "}"
+    ],
+    "description": "Clase de test completa"
+  },
+  "Locator": {
+    "scope": "java",
+    "prefix": "loc",
+    "body": ["private final By ${1:nombre} = By.${2|id,xpath,cssSelector,name|}(\"$3\");"],
+    "description": "Locator By"
+  },
+  "Constructor Page": {
+    "scope": "java",
+    "prefix": "pctor",
+    "body": ["public ${TM_FILENAME_BASE}(WebDriver driver) {", "\tsuper(driver);", "}"],
+    "description": "Constructor de Page"
+  },
+  "Metodo Test": {
+    "scope": "java",
+    "prefix": "stest",
+    "body": ["@Test(description = \"$1\")", "public void ${2:nombreTest}() {", "\t$0", "}"],
+    "description": "Método @Test"
+  },
+  "Assert true": {
+    "scope": "java",
+    "prefix": "atrue",
+    "body": ["Assert.assertTrue(${1:condicion}, \"${2:mensaje}\");"],
+    "description": "Assert.assertTrue"
+  },
+  "Assert equals": {
+    "scope": "java",
+    "prefix": "aeq",
+    "body": ["Assert.assertEquals(${1:actual}, ${2:esperado}, \"${3:mensaje}\");"],
+    "description": "Assert.assertEquals"
+  }
+}

@@ -1,0 +1,14 @@
+# Maven
+target/
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code (se mantienen los snippets)
+.vscode/*
+!.vscode/qa.code-snippets
+
+# Sistema
+.DS_Store
+Thumbs.db

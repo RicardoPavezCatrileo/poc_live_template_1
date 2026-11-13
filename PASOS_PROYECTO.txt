@@ -1,0 +1,245 @@
+
+PASOS_PROYECTO.txt
+100 %
+==========================================================
+ PROYECTO BASE QA - Selenium + TestNG + Maven (Java 21)
+==========================================================
+
+----------------------------------------------------------
+PASO 1: Verificar herramientas
+----------------------------------------------------------
+java -version
+mvn -version
+
+Resultado esperado:
+- Java 21 (o superior a 17)
+- Maven 3.9.x
+
+----------------------------------------------------------
+PASO 2: Estructura Maven y pom.xml
+----------------------------------------------------------
+# Crear carpetas
+mkdir src\main\java\com\qa\core, src\main\java\com\qa\pages, src\test\java\com\qa\tests, src\test\resources
+
+# Crear pom.xml (Selenium 4.25.0, TestNG 7.10.2, Surefire 3.2.5)
+code pom.xml
+
+# Contenido del pom.xml:
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.qa</groupId>
+    <artifactId>qa-base-template</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <selenium.version>4.25.0</selenium.version>
+        <testng.version>7.10.2</testng.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>${selenium.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+                    </suiteXmlFiles>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+# Descargar dependencias y compilar
+mvn compile
+-> Debe decir BUILD SUCCESS
+
+----------------------------------------------------------
+PASO 3: Core (Config y DriverFactory)
+----------------------------------------------------------
+# Config: URL base, navegador, headless, timeout
+code src\main\java\com\qa\core\Config.java
+
+# Contenido de Config.java:
+package com.qa.core;
+
+public final class Config {
+    private Config() {}
+
+    // Se pueden cambiar por consola: mvn test -Dbrowser=firefox -DbaseUrl=https://...
+    public static final String BASE_URL = System.getProperty("baseUrl", "https://www.google.com");
+    public static final String BROWSER = System.getProperty("browser", "chrome");
+    public static final boolean HEADLESS = Boolean.parseBoolean(System.getProperty("headless", "false"));
+    public static final int TIMEOUT = Integer.parseInt(System.getProperty("timeout", "10"));
+}
+
+# DriverFactory: crea/cierra el navegador (ThreadLocal para paralelo)
+# Soporta: chrome (default), firefox, edge
+code src\main\java\com\qa\core\DriverFactory.java
+
+# Contenido de DriverFactory.java:
+package com.qa.core;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+
+public final class DriverFactory {
+    private static final ThreadLocal<WebDriver> DRIVER = new ThreadLocal<>();
+
+    private DriverFactory() {}
+
+    public static WebDriver getDriver() {
+        if (DRIVER.get() == null) {
+            DRIVER.set(crearDriver());
+        }
+        return DRIVER.get();
+    }
+
+    private static WebDriver crearDriver() {
+        WebDriver driver = switch (Config.BROWSER.toLowerCase()) {
+            case "firefox" -> {
+                FirefoxOptions o = new FirefoxOptions();
+                if (Config.HEADLESS) o.addArguments("-headless");
+                yield new FirefoxDriver(o);
+            }
+            case "edge" -> {
+                EdgeOptions o = new EdgeOptions();
+                if (Config.HEADLESS) o.addArguments("--headless=new");
+                yield new EdgeDriver(o);
+            }
+            default -> {
+                ChromeOptions o = new ChromeOptions();
+                if (Config.HEADLESS) o.addArguments("--headless=new");
+                yield new ChromeDriver(o);
+            }
+        };
+        driver.manage().window().maximize();
+        return driver;
+    }
+
+    public static void quitDriver() {
+        if (DRIVER.get() != null) {
+            DRIVER.get().quit();
+            DRIVER.remove();
+        }
+    }
+}
+
+mvn compile
+-> Debe decir BUILD SUCCESS
+
+----------------------------------------------------------
+PASO 4: BasePage (clase madre de todas las paginas)
+----------------------------------------------------------
+code src\main\java\com\qa\pages\BasePage.java
+
+# Contenido de BasePage.java:
+package com.qa.pages;
+
+import com.qa.core.Config;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
+
+public abstract class BasePage {
+    protected final WebDriver driver;
+    protected final WebDriverWait wait;
+
+    protected BasePage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(Config.TIMEOUT));
+    }
+
+    /** Ruta relativa de la pagina, ej: "/login". Vacio = home. */
+    protected abstract String ruta();
+
+    public void abrir() {
+        driver.get(Config.BASE_URL + ruta());
+        esperarCarga();
+    }
+
+    protected void esperarCarga() {
+        wait.until(d -> "complete".equals(
+                ((JavascriptExecutor) d).executeScript("return document.readyState")));
+    }
+
+    protected WebElement esperarVisible(By locator) {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+    }
+
+    protected void click(By locator) {
+        wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
+    }
+
+    protected void escribir(By locator, String texto) {
+        WebElement e = esperarVisible(locator);
+        e.clear();
+        e.sendKeys(texto);
+    }
+
+    protected String obtenerTexto(By locator) {
+        return esperarVisible(locator).getText();
+    }
+
+    protected boolean estaVisible(By locator) {
+        try {
+            return esperarVisible(locator).isDisplayed();
+        } catch (TimeoutException e) {
+            return false;
+        }
+    }
+
+    public String getTitulo() {
+        return driver.getTitle();
+    }
+
+    public String getUrlActual() {
+        return driver.getCurrentUrl();
+    }
+}
+
+mvn compile
+-> Debe decir BUILD SUCCESS
+
+----------------------------------------------------------
+COMANDOS UTILES
+----------------------------------------------------------
+mvn compile                          Compilar
+mvn test                             Ejecutar tests
+mvn test -Dbrowser=firefox           Cambiar navegador
+mvn test -Dheadless=true             Sin abrir ventana
+mvn test -DbaseUrl=https://...       Cambiar URL base
+mvn clean                            Limpiar compilados
