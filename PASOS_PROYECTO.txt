@@ -89,7 +89,7 @@ public final class Config {
     private Config() {}
 
     // Se pueden cambiar por consola: mvn test -Dbrowser=firefox -DbaseUrl=https://...
-    public static final String BASE_URL = System.getProperty("baseUrl", "https://www.google.com");
+    public static final String BASE_URL = System.getProperty("baseUrl", "https://the-internet.herokuapp.com");
     public static final String BROWSER = System.getProperty("browser", "chrome");
     public static final boolean HEADLESS = Boolean.parseBoolean(System.getProperty("headless", "false"));
     public static final int TIMEOUT = Integer.parseInt(System.getProperty("timeout", "10"));
@@ -233,6 +233,366 @@ public abstract class BasePage {
 
 mvn compile
 -> Debe decir BUILD SUCCESS
+
+----------------------------------------------------------
+PASO 5: Page de ejemplo (LoginPage)
+----------------------------------------------------------
+# Sitio de practica: https://the-internet.herokuapp.com
+# Usuario: tomsmith / Clave: SuperSecretPassword!
+# (BASE_URL en Config.java ya apunta a este sitio)
+
+code src\main\java\com\qa\pages\LoginPage.java
+
+# Contenido de LoginPage.java:
+package com.qa.pages;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+
+public class LoginPage extends BasePage {
+
+    // Locators
+    private final By txtUsuario = By.id("username");
+    private final By txtClave = By.id("password");
+    private final By btnLogin = By.cssSelector("button[type='submit']");
+    private final By lblMensaje = By.id("flash");
+
+    public LoginPage(WebDriver driver) {
+        super(driver);
+    }
+
+    @Override
+    protected String ruta() {
+        return "/login";
+    }
+
+    // Acciones
+    public void login(String usuario, String clave) {
+        escribir(txtUsuario, usuario);
+        escribir(txtClave, clave);
+        click(btnLogin);
+    }
+
+    public String obtenerMensaje() {
+        return obtenerTexto(lblMensaje);
+    }
+}
+
+mvn compile
+-> Debe decir "Compiling 4 source files" y BUILD SUCCESS
+   (OJO: BUILD SUCCESS no garantiza que existan todos los archivos;
+    revisar que el numero de archivos compilados sea el esperado)
+
+----------------------------------------------------------
+PASO 6: BaseTest, LoginTest y testng.xml
+----------------------------------------------------------
+# 6.1 BaseTest: abre el driver antes de cada test y lo cierra despues
+code src\test\java\com\qa\tests\BaseTest.java
+
+# Contenido de BaseTest.java:
+package com.qa.tests;
+
+import com.qa.core.DriverFactory;
+import org.openqa.selenium.WebDriver;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+
+public abstract class BaseTest {
+    protected WebDriver driver;
+
+    @BeforeMethod(alwaysRun = true)
+    public void setUp() {
+        driver = DriverFactory.getDriver();
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void tearDown() {
+        DriverFactory.quitDriver();
+    }
+}
+
+# 6.2 LoginTest: login exitoso y login fallido
+code src\test\java\com\qa\tests\LoginTest.java
+
+# Contenido de LoginTest.java:
+package com.qa.tests;
+
+import com.qa.pages.LoginPage;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+public class LoginTest extends BaseTest {
+
+    @Test(description = "Login exitoso con credenciales validas")
+    public void loginExitoso() {
+        LoginPage login = new LoginPage(driver);
+        login.abrir();
+        login.login("tomsmith", "SuperSecretPassword!");
+
+        Assert.assertTrue(login.obtenerMensaje().contains("You logged into a secure area!"),
+                "No aparecio el mensaje de login exitoso");
+        Assert.assertTrue(login.getUrlActual().contains("/secure"), "No redirigio a /secure");
+    }
+
+    @Test(description = "Login fallido con usuario invalido")
+    public void loginFallido() {
+        LoginPage login = new LoginPage(driver);
+        login.abrir();
+        login.login("usuarioMalo", "claveMala");
+
+        Assert.assertTrue(login.obtenerMensaje().contains("Your username is invalid!"),
+                "No aparecio el mensaje de error");
+    }
+}
+
+# 6.3 testng.xml: la suite que ejecuta Maven
+code src\test\resources\testng.xml
+
+# Contenido de testng.xml:
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Suite QA Base">
+    <test name="Login">
+        <classes>
+            <class name="com.qa.tests.LoginTest"/>
+        </classes>
+    </test>
+</suite>
+
+mvn test
+-> Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+-> BUILD SUCCESS
+
+----------------------------------------------------------
+PASO 7: Snippets del proyecto (atajos en VS Code)
+----------------------------------------------------------
+# Los snippets son atajos del EDITOR (no de Java): escribes el
+# prefijo + Tab y te escribe el codigo. En IntelliJ se llaman
+# "Live Templates". Van dentro del proyecto para que viajen con el.
+
+mkdir .vscode
+code .vscode\qa.code-snippets
+
+# Atajos disponibles:
+#   qpage  + Tab -> Clase Page Object completa (archivo vacio)
+#   qtest  + Tab -> Clase de Test completa (archivo vacio)
+#   loc    + Tab -> Locator By
+#   pctor  + Tab -> Constructor de Page
+#   stest  + Tab -> Metodo @Test
+#   atrue  + Tab -> Assert.assertTrue
+#   aeq    + Tab -> Assert.assertEquals
+
+# Contenido de qa.code-snippets:
+{
+  "Page Object completa": {
+    "scope": "java",
+    "prefix": "qpage",
+    "body": [
+      "package com.qa.pages;",
+      "",
+      "import org.openqa.selenium.By;",
+      "import org.openqa.selenium.WebDriver;",
+      "",
+      "public class ${TM_FILENAME_BASE} extends BasePage {",
+      "",
+      "\t// Locators",
+      "\tprivate final By ${1:elemento} = By.${2|id,xpath,cssSelector,name|}(\"$3\");",
+      "",
+      "\tpublic ${TM_FILENAME_BASE}(WebDriver driver) {",
+      "\t\tsuper(driver);",
+      "\t}",
+      "",
+      "\t@Override",
+      "\tprotected String ruta() {",
+      "\t\treturn \"${4:/ruta}\";",
+      "\t}",
+      "",
+      "\t// Acciones",
+      "\t$0",
+      "}"
+    ],
+    "description": "Clase Page Object completa"
+  },
+  "Clase de Test completa": {
+    "scope": "java",
+    "prefix": "qtest",
+    "body": [
+      "package com.qa.tests;",
+      "",
+      "import com.qa.pages.${1:LoginPage};",
+      "import org.testng.Assert;",
+      "import org.testng.annotations.Test;",
+      "",
+      "public class ${TM_FILENAME_BASE} extends BaseTest {",
+      "",
+      "\t@Test(description = \"${2:descripcion}\")",
+      "\tpublic void ${3:nombreTest}() {",
+      "\t\t$1 page = new $1(driver);",
+      "\t\tpage.abrir();",
+      "\t\t$0",
+      "\t}",
+      "}"
+    ],
+    "description": "Clase de test completa"
+  },
+  "Locator": {
+    "scope": "java",
+    "prefix": "loc",
+    "body": ["private final By ${1:nombre} = By.${2|id,xpath,cssSelector,name|}(\"$3\");"],
+    "description": "Locator By"
+  },
+  "Constructor Page": {
+    "scope": "java",
+    "prefix": "pctor",
+    "body": ["public ${TM_FILENAME_BASE}(WebDriver driver) {", "\tsuper(driver);", "}"],
+    "description": "Constructor de Page"
+  },
+  "Metodo Test": {
+    "scope": "java",
+    "prefix": "stest",
+    "body": ["@Test(description = \"$1\")", "public void ${2:nombreTest}() {", "\t$0", "}"],
+    "description": "Metodo @Test"
+  },
+  "Assert true": {
+    "scope": "java",
+    "prefix": "atrue",
+    "body": ["Assert.assertTrue(${1:condicion}, \"${2:mensaje}\");"],
+    "description": "Assert.assertTrue"
+  },
+  "Assert equals": {
+    "scope": "java",
+    "prefix": "aeq",
+    "body": ["Assert.assertEquals(${1:actual}, ${2:esperado}, \"${3:mensaje}\");"],
+    "description": "Assert.assertEquals"
+  }
+}
+
+# Prueba: crear archivo vacio, escribir qpage + Tab
+code src\main\java\com\qa\pages\HomePage.java
+
+----------------------------------------------------------
+PASO 8: Subir el proyecto a GitHub
+----------------------------------------------------------
+# 8.1 Verificar si ya hay un repo git (y donde empieza)
+git rev-parse --show-toplevel
+#   - Responde la carpeta del proyecto -> ya es repo, seguir
+#   - Responde una carpeta PADRE (ej: C:/Users/ricar) -> crear repo propio
+#   - "fatal: not a git repository" -> crear repo
+# OJO: si el repo es de una carpeta padre y haces push desde ahi,
+#      subes TODO lo que hay en esa carpeta.
+
+# 8.2 Crear .gitignore ANTES del primer git add
+code .gitignore
+
+# Contenido de .gitignore:
+# Maven
+target/
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code (se mantienen los snippets)
+.vscode/*
+!.vscode/qa.code-snippets
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# 8.3 Crear repo propio del proyecto
+git init
+git branch -M main
+git rev-parse --show-toplevel
+-> Debe responder la carpeta del proyecto
+
+# 8.4 Agregar y REVISAR antes del commit
+git add .
+git status
+-> NO debe aparecer target/. Deben estar: .gitignore, .vscode/qa.code-snippets,
+   PASOS_PROYECTO.txt, pom.xml y los archivos de src/
+
+# Si se colo algo (ej: target/ por olvidar el .gitignore):
+git rm -r --cached . -q
+# (crear/corregir .gitignore y repetir git add . / git status)
+
+# 8.5 Commit, conectar con GitHub y subir
+git commit -m "Proyecto base QA: Selenium + TestNG + Maven con POM y snippets"
+git remote add origin https://github.com/RicardoPavezCatrileo/poc_live_template_1.git
+git push -u origin main
+
+# Si el push dice "rejected" / "fetch first" (el repo en GitHub tiene README):
+git pull origin main --allow-unrelated-histories --no-edit
+git push -u origin main
+
+# Para cambios posteriores:
+git add .
+git status
+git commit -m "descripcion del cambio"
+git push
+
+----------------------------------------------------------
+PASO 9: Flujo de trabajo con ramas y Pull Request (PR)
+----------------------------------------------------------
+# PR (GitHub / Azure DevOps) = MR, Merge Request (GitLab). Es lo mismo:
+# solicitud para unir los cambios de una rama a otra (normalmente main).
+#
+# CICLO: rama -> cambios -> push -> PR -> revision -> merge -> pull
+
+# 9.1 Crear rama nueva y moverse a ella (-b = crear + moverse)
+git checkout -b feature/nombre-del-cambio
+
+# Ver en que rama estoy (la del * es la actual)
+git branch
+
+# Moverse entre ramas existentes (sin -b)
+git checkout main
+git checkout feature/nombre-del-cambio
+# (o git switch <rama>; o clic en la rama en la barra azul de VS Code)
+
+# OJO: si la barra de VS Code muestra otra rama que la terminal,
+# manda la TERMINAL. Recargar: Ctrl+Shift+P -> Developer: Reload Window
+
+# 9.2 Hacer cambios (ej: crear README.md)
+code README.md
+
+# 9.3 Commit y subir la rama
+git add README.md
+git commit -m "Agrega README"
+git push -u origin feature/nombre-del-cambio
+
+# 9.4 Crear el PR en GitHub
+#   - Boton amarillo "Compare & pull request"
+#     (o pestana Pull requests -> New pull request)
+#   - Verificar: base: main  <-  compare: feature/...
+#   - Titulo + descripcion -> Create pull request
+
+# 9.5 Revisar y hacer merge
+#   - Pestana "Files changed": ver exactamente que cambio
+#   - Conversation -> Merge pull request -> Confirm merge
+#   - Delete branch (borra la rama SOLO en GitHub)
+
+# 9.6 Actualizar main local y limpiar
+git checkout main
+git pull
+git branch -d feature/nombre-del-cambio
+git fetch --prune
+git branch
+-> Debe mostrar solo: * main
+
+# Nota: si GitHub aparece en espanol ("principal", "Solicitudes de
+# extraccion") es Google Traductor de Chrome -> "Mostrar original".
+
+----------------------------------------------------------
+COMO REUTILIZAR ESTE TEMPLATE EN UN PROYECTO NUEVO
+----------------------------------------------------------
+1. git clone https://github.com/RicardoPavezCatrileo/poc_live_template_1.git
+   (o copiar la carpeta completa sin target/ ni .git/)
+2. En pom.xml cambiar <artifactId> por el nombre del proyecto.
+3. En Config.java cambiar BASE_URL (o usar -DbaseUrl=...).
+4. Borrar LoginPage / LoginTest de ejemplo si no sirven.
+5. Abrir en VS Code (File -> Open Folder) y ejecutar: mvn test
+6. Si VS Code marca rojo pero mvn compila: Ctrl+Shift+P ->
+   "Java: Clean Java Language Server Workspace" -> Reload and delete
 
 ----------------------------------------------------------
 COMANDOS UTILES
