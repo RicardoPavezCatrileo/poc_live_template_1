@@ -1,8 +1,13 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="Suite QA Base">
-    <test name="Login">
+    <test name="TestNG - Login">
         <classes>
             <class name="com.qa.tests.LoginTest"/>
+        </classes>
+    </test>
+    <test name="BDD - Cucumber">
+        <classes>
+            <class name="com.qa.runners.TestRunner"/>
         </classes>
     </test>
 </suite>
