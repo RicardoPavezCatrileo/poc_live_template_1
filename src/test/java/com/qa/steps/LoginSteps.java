@@ -28,4 +28,18 @@ public class LoginSteps {
         Assert.assertTrue(obtenido.contains(mensajeEsperado),
                 "Esperado: " + mensajeEsperado + " | Obtenido: " + obtenido);
     }
+
+    // "And" en el feature reutiliza cualquier anotación (@Given/@When/@Then):
+    // Cucumber solo compara el texto del paso.
+    @Then("es redirigido al área segura")
+    public void validarAreaSegura() {
+        String url = loginPage.getUrlActual();
+        Assert.assertTrue(url.contains("/secure"), "No redirigió a /secure. URL actual: " + url);
+    }
+
+    @Then("permanece en la página de login")
+    public void validarSigueEnLogin() {
+        String url = loginPage.getUrlActual();
+        Assert.assertTrue(url.contains("/login"), "Salió de /login. URL actual: " + url);
+    }
 }
