@@ -7,6 +7,8 @@ import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Fábrica de navegadores: el ÚNICO lugar donde se crea y se cierra el WebDriver (capa core).
@@ -20,6 +22,7 @@ import org.openqa.selenium.firefox.FirefoxOptions;
  *  - ThreadLocal: un navegador por hilo, preparado para ejecución en paralelo.
  */
 public final class DriverFactory {
+    private static final Logger log = LoggerFactory.getLogger(DriverFactory.class);
     private static final ThreadLocal<WebDriver> DRIVER = new ThreadLocal<>();
 
     private DriverFactory() {}
@@ -32,6 +35,7 @@ public final class DriverFactory {
     }
 
     private static WebDriver crearDriver() {
+        log.info("Abriendo navegador: {} (headless={})", Config.BROWSER, Config.HEADLESS);
         WebDriver driver = switch (Config.BROWSER.toLowerCase()) {
             case "firefox" -> {
                 FirefoxOptions o = new FirefoxOptions();
@@ -55,6 +59,7 @@ public final class DriverFactory {
 
     public static void quitDriver() {
         if (DRIVER.get() != null) {
+            log.info("Cerrando navegador");
             DRIVER.get().quit();
             DRIVER.remove();
         }

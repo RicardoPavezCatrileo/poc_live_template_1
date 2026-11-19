@@ -8,6 +8,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
@@ -44,6 +46,10 @@ public abstract class BasePage {
     // o se acabe el tiempo (Config.TIMEOUT, por defecto 10 segundos).
     protected final WebDriverWait wait;
 
+    // Logger de la página: getClass() = la página real (ej: LoginPage),
+    // así cada línea del log indica en qué página ocurrió la acción.
+    protected final Logger log = LoggerFactory.getLogger(getClass());
+
     /**
      * Constructor: recibe el driver (normalmente desde DriverFactory.getDriver())
      * y prepara la espera con el timeout configurado.
@@ -67,6 +73,7 @@ public abstract class BasePage {
      * y espera a que termine de cargar.
      */
     public void abrir() {
+        log.info("Abriendo {}", Config.BASE_URL + ruta());
         driver.get(Config.BASE_URL + ruta());
         esperarCarga();
     }
@@ -98,6 +105,7 @@ public abstract class BasePage {
      * (visible y habilitado). Evita fallar si el botón aún se está cargando.
      */
     protected void click(By locator) {
+        log.debug("Click en {}", locator);
         wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
     }
 
@@ -107,6 +115,8 @@ public abstract class BasePage {
      * El clear() evita que el texto nuevo se sume al que ya existía.
      */
     protected void escribir(By locator, String texto) {
+        // No se registra el texto: podría ser una clave
+        log.debug("Escribiendo en {}", locator);
         WebElement e = esperarVisible(locator);
         e.clear();
         e.sendKeys(texto);
@@ -117,7 +127,9 @@ public abstract class BasePage {
      * Se usa en los tests para validar con Assert.
      */
     protected String obtenerTexto(By locator) {
-        return esperarVisible(locator).getText();
+        String texto = esperarVisible(locator).getText();
+        log.debug("Texto de {}: {}", locator, texto);
+        return texto;
     }
 
     /**

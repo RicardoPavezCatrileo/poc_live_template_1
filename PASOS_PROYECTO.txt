@@ -583,6 +583,59 @@ git branch
 # extraccion") es Google Traductor de Chrome -> "Mostrar original".
 
 ----------------------------------------------------------
+PASO 10: Logs (SLF4J + Logback) y reportes (ExtentReports)
+----------------------------------------------------------
+# Rama: feature/logs-reportes
+git checkout -b feature/logs-reportes
+
+# 10.1 pom.xml: agregar en <properties>
+#   <slf4j.version>2.0.16</slf4j.version>
+#   <logback.version>1.5.12</logback.version>
+#   <extentreports.version>5.1.2</extentreports.version>
+# y en <dependencies>:
+#   org.slf4j:slf4j-api            (SIN scope: lo usa src/main)
+#   ch.qos.logback:logback-classic (SIN scope)
+#   com.aventstack:extentreports   (scope test)
+#
+# OJO: slf4j-api se declara a mano porque TestNG trae la 1.7 (antigua).
+# Si gana la 1.7, Logback no carga y en consola aparece:
+#   SLF4J: Defaulting to no-operation (NOP) logger implementation
+# Para ver que version gana:
+mvn dependency:tree "-Dincludes=org.slf4j"
+
+# 10.2 src/test/resources/logback-test.xml
+#   - Salida a consola y a target/logs/ejecucion.log
+#   - Paquete com.qa en INFO (configurable), librerias externas en WARN
+
+# 10.3 Logs en el codigo
+#   private static final Logger log = LoggerFactory.getLogger(MiClase.class);
+#   log.info("Abriendo {}", url);   // {} se reemplaza por el valor
+#   - BasePage: "protected final Logger log" -> lo heredan todas las paginas
+#   - DriverFactory: abrir / cerrar navegador
+#   - BaseTest y Hooks: inicio, resultado y fin de cada test/escenario
+#   - NUNCA registrar claves (escribir() no registra el texto)
+
+# 10.4 src/test/java/com/qa/reportes/ExtentManager.java
+#   - Un solo reporte para TestNG y Cucumber
+#   - iniciarTest(nombre, categorias...) -> marcarResultado(fallo, error)
+#   - Si falla: screenshot en base64 dentro del HTML
+#   - Lo llaman BaseTest (@BeforeMethod/@AfterMethod) y Hooks (@Before/@After),
+#     SIEMPRE antes de DriverFactory.quitDriver() (el screenshot necesita el navegador)
+
+# 10.5 Ejecutar y revisar
+mvn test
+mvn test "-Dlog.nivel=DEBUG"      # mas detalle: clicks, escrituras, textos leidos
+
+# Resultados (carpeta target/, se borra con mvn clean):
+#   target/reportes/extent-report.html  -> reporte Extent (abrir con doble clic)
+#   target/logs/ejecucion.log           -> log completo de la ejecucion
+#   target/cucumber-report.html         -> reporte de Cucumber
+#   target/surefire-reports/index.html  -> reporte de TestNG
+
+# Abrir el reporte desde PowerShell (Invoke-Item = doble clic):
+Invoke-Item target/reportes/extent-report.html
+
+----------------------------------------------------------
 COMO REUTILIZAR ESTE TEMPLATE EN UN PROYECTO NUEVO
 ----------------------------------------------------------
 1. git clone https://github.com/RicardoPavezCatrileo/poc_live_template_1.git
@@ -603,3 +656,4 @@ mvn test -Dbrowser=firefox           Cambiar navegador
 mvn test -Dheadless=true             Sin abrir ventana
 mvn test -DbaseUrl=https://...       Cambiar URL base
 mvn clean                            Limpiar compilados
+mvn test "-Dlog.nivel=DEBUG"         Logs con mas detalle

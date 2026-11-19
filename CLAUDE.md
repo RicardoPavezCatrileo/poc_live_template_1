@@ -28,9 +28,14 @@ mvn clean                                    # limpiar compilados (target/)
 
 En PowerShell, las propiedades `-D` que contienen puntos deben ir entre comillas (como en el ejemplo de `cucumber.filter.tags`).
 
-Reportes de Cucumber: `target/cucumber-report.html` y `target/cucumber.json`.
+Logs y reportes (todo en `target/`, se borra con `mvn clean`):
+- `target/reportes/extent-report.html`: reporte ExtentReports **único** para TestNG y Cucumber, con screenshot en los fallos.
+- `target/logs/ejecucion.log`: log de la ejecución (también sale por consola). Más detalle con `mvn test "-Dlog.nivel=DEBUG"`.
+- `target/cucumber-report.html` / `target/cucumber.json` (Cucumber) y `target/surefire-reports/` (TestNG).
 
 ## Arquitectura
+
+`arquitectura.html` es un mapa visual interactivo (abrir en el navegador) con las capas, las clases y el recorrido paso a paso de `mvn test` por ambas rutas. Los comentarios de cabecera de cada clase ("Relación en la arquitectura") lo referencian: si se agrega o cambia una pieza, actualizar el mapa y esos comentarios.
 
 - `src/main/java/com/qa/core`
   - `Config`: toda la configuración se lee de propiedades `-D` con valores por defecto (`baseUrl`, `browser`, `headless`, `timeout`).
@@ -41,6 +46,10 @@ Reportes de Cucumber: `target/cucumber-report.html` y `target/cucumber.json`.
   - **Cucumber BDD**: features en `src/test/resources/features`, step definitions en `com.qa.steps`, ciclo de vida en `com.qa.hooks.Hooks` (crea el driver en `@Before`; en `@After` adjunta captura si el escenario falla y cierra el driver). `com.qa.runners.TestRunner` define `glue = {"com.qa.steps", "com.qa.hooks"}`: si se crean paquetes nuevos de steps o hooks, hay que agregarlos ahí.
     - Convención de features: un caso de prueba por archivo, `CPxxx_<nombre>.feature`, con el escenario titulado `CPxxx - <descripción>` y tags de módulo/resultado (`@login @exitoso`, `@login @fallido`; `@smoke` para los críticos). El código `CPxxx` corresponde 1 a 1 con el ID del caso en la planilla Excel de casos de prueba, pensando en implementar más adelante *data driven testing* desde esa planilla: mantener esa correspondencia al crear o renombrar features.
     - Los pasos Gherkin son globales para todo el glue: el mismo texto (p. ej. `que el usuario está en la página de login`) se reutiliza entre features y debe definirse **una sola vez**; un texto duplicado en dos clases de steps hace fallar la ejecución.
+- **Logs y reportes**:
+  - Logs con SLF4J + Logback (configurado en `src/test/resources/logback-test.xml`). `BasePage` tiene un `log` protegido que heredan las páginas y `BaseTest` tiene otro para los tests; `DriverFactory` y `Hooks` usan el suyo propio. Nunca registrar claves (por eso `escribir()` no registra el texto).
+  - `com.qa.reportes.ExtentManager` (en `src/test`) mantiene el reporte de Extent. `BaseTest` (`@BeforeMethod`/`@AfterMethod`) y `Hooks` (`@Before`/`@After`) lo usan con el mismo ciclo: `iniciarTest` → `marcarResultado`. El resultado se marca **antes** de `quitDriver()` porque el screenshot necesita el navegador abierto.
+  - `slf4j-api` 2.x se declara explícitamente en el pom: TestNG trae la 1.7 y, si gana esa, Logback no se carga (`SLF4J: NOP logger`) y los logs no aparecen.
 - `src/test/resources/testng.xml` es la suite que ejecuta Surefire: las nuevas clases de test TestNG (o runners) deben registrarse ahí para que corran con `mvn test`.
 
 ## Snippets del editor
