@@ -27,6 +27,12 @@ import java.time.Duration;
  *
  * Es "abstract": no se puede crear un BasePage directamente,
  * solo se usa heredando (ej: LoginPage extends BasePage).
+ *
+ * Relación en la arquitectura (ver arquitectura.html):
+ *  - Usa Config: BASE_URL (en abrir()) y TIMEOUT (en el WebDriverWait).
+ *  - Recibe el WebDriver que creó DriverFactory (no lo crea ella).
+ *  - Usa WebDriverWait + ExpectedConditions para esperar antes de actuar.
+ *  - La heredan las páginas (LoginPage): ellas dicen QUÉ hacer, BasePage sabe CÓMO.
  */
 public abstract class BasePage {
 

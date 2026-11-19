@@ -3,6 +3,15 @@ package com.qa.pages;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
+/**
+ * Page Object de la página /login.
+ *
+ * Relación en la arquitectura (ver arquitectura.html):
+ *  - Hereda de BasePage: abrir(), escribir(), click(), obtenerTexto(), getUrlActual().
+ *  - Define sus locators y acciones de negocio: login(usuario, clave) y obtenerMensaje().
+ *  - La usan las dos rutas de prueba: LoginTest (TestNG) y LoginSteps (Cucumber).
+ *  - Recibe el driver por constructor (viene de DriverFactory).
+ */
 public class LoginPage extends BasePage {
 
     // Locators

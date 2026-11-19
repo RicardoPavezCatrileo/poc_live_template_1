@@ -8,6 +8,17 @@ import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 
+/**
+ * Fábrica de navegadores: el ÚNICO lugar donde se crea y se cierra el WebDriver (capa core).
+ *
+ * Relación en la arquitectura (ver arquitectura.html):
+ *  - Usa Config: BROWSER (chrome/firefox/edge) y HEADLESS.
+ *  - Crea el WebDriver de Selenium, que controla el navegador real.
+ *  - La usan BaseTest (ruta TestNG) y Hooks (ruta BDD) para abrir y cerrar
+ *    el navegador en cada test o escenario, y LoginSteps para entregarle
+ *    el driver a las páginas.
+ *  - ThreadLocal: un navegador por hilo, preparado para ejecución en paralelo.
+ */
 public final class DriverFactory {
     private static final ThreadLocal<WebDriver> DRIVER = new ThreadLocal<>();
 

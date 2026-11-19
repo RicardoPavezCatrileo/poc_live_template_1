@@ -7,6 +7,15 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.testng.Assert;
 
+/**
+ * Step definitions del login (ruta BDD).
+ *
+ * Relación en la arquitectura (ver arquitectura.html):
+ *  - Cucumber la encuentra porque com.qa.steps está en el glue de TestRunner.
+ *  - Traduce cada frase de los .feature (CP001, CP002) a un método Java.
+ *  - Pide el driver a DriverFactory (ya abierto por Hooks) y se lo pasa a LoginPage.
+ *  - Usa LoginPage (nunca Selenium directo) y valida con Assert.
+ */
 public class LoginSteps {
 
     private LoginPage loginPage;
