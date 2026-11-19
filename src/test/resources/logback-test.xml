@@ -1,0 +1,41 @@
+<!--
+  Configuración de logs (Logback). Logback la encuentra sola en el classpath de test.
+
+  Salidas:
+   - Consola: lo que se ve en PowerShell al ejecutar mvn test.
+   - Archivo: target/logs/ejecucion.log (se reescribe en cada ejecución).
+
+  Niveles (de más a menos detalle): TRACE < DEBUG < INFO < WARN < ERROR.
+  Se muestran los mensajes del nivel indicado hacia arriba.
+  Nivel del proyecto desde la terminal: mvn test "-Dlog.nivel=DEBUG"
+-->
+<configuration>
+
+    <!-- Formato: hora [hilo] NIVEL clase - mensaje -->
+    <property name="PATRON" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{0} - %msg%n"/>
+
+    <appender name="CONSOLA" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PATRON}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ARCHIVO" class="ch.qos.logback.core.FileAppender">
+        <file>target/logs/ejecucion.log</file>
+        <append>false</append>
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logs del proyecto (paquete com.qa): INFO por defecto, configurable con -Dlog.nivel -->
+    <logger name="com.qa" level="${log.nivel:-INFO}"/>
+
+    <!-- Librerías externas (Selenium, Cucumber, etc.): solo advertencias y errores -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLA"/>
+        <appender-ref ref="ARCHIVO"/>
+    </root>
+
+</configuration>

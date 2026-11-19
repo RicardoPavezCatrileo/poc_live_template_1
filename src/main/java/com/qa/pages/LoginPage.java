@@ -31,6 +31,7 @@ public class LoginPage extends BasePage {
 
     // Acciones
     public void login(String usuario, String clave) {
+        log.info("Login con usuario: {}", usuario); // la clave nunca se registra
         escribir(txtUsuario, usuario);
         escribir(txtClave, clave);
         click(btnLogin);

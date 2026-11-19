@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa de arquitectura QA</title>
+<style>
+:root{
+  --bg:#f3f6f9; --surface:#ffffff; --ink:#14212e; --muted:#5a6b7c; --line:#d5dee7;
+  --accent:#0a6fc2; --accent-soft:#e2effa; --zone:#eef3f8; --code:#f6f8fa;
+  --c0:#2a78d6; --c1:#eb6834; --c2:#1baf7a; --c3:#6250d6; --c4:#eda100; --c5:#e87ba4; --c6:#0d9488;
+  --f-body:system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e161e; --surface:#16212c; --ink:#e4ecf3; --muted:#93a4b5; --line:#2a3949;
+  --accent:#4ea8f0; --accent-soft:#16304a; --zone:#1b2836; --code:#101a24;
+  --c0:#3987e5; --c1:#d95926; --c2:#199e70; --c3:#9085e9; --c4:#c98500; --c5:#d55181; --c6:#2dbfae; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e161e; --surface:#16212c; --ink:#e4ecf3; --muted:#93a4b5; --line:#2a3949;
+  --accent:#4ea8f0; --accent-soft:#16304a; --zone:#1b2836; --code:#101a24;
+  --c0:#3987e5; --c1:#d95926; --c2:#199e70; --c3:#9085e9; --c4:#c98500; --c5:#d55181; --c6:#2dbfae; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1400px;margin:0 auto;padding:24px 16px 48px;display:grid;gap:18px}
+.wrap>*{min-width:0}
+header h1{margin:0 0 6px;font-size:1.6rem;line-height:1.2}
+header p{margin:0;color:var(--muted);max-width:80ch}
+.eyebrow{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+
+.barra{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:.9rem;border:0;background:transparent;color:var(--ink);padding:7px 14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.nav-pasos{display:flex;gap:8px;align-items:center}
+.btn{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.contador{font-family:var(--f-mono);font-size:.82rem;color:var(--muted);min-width:9ch}
+.ayuda{font-size:.82rem;color:var(--muted)}
+
+.grid{display:grid;gap:16px;grid-template-columns:1fr}
+@media (min-width:1150px){.grid{grid-template-columns:minmax(0,1fr) 380px;align-items:start}}
+.lienzo{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+.lienzo svg{display:block;min-width:960px;width:100%;height:auto}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px;align-content:start}
+@media (min-width:1150px){.panel{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}}
+.panel h2{margin:0;font-size:1.2rem;line-height:1.3}
+.panel p{margin:0}
+.panel .area{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.panel .archivo{font-family:var(--f-mono);font-size:.8rem;color:var(--accent);word-break:break-all}
+.panel ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.panel h3{margin:6px 0 0;font-size:.8rem;font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:500}
+pre{margin:0;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--f-mono);font-size:.78rem;line-height:1.45;overflow-x:auto;white-space:pre}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--code);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+pre code{border:0;padding:0;background:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:.82rem;padding:3px 10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:99px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chips button:hover{border-color:var(--accent)}
+.chips i{width:8px;height:8px;border-radius:2px;display:inline-block}
+
+/* SVG */
+.carril rect{fill:var(--zone)}
+.carril.par rect{fill:transparent}
+.carril text{font-family:var(--f-mono);font-size:11px;fill:var(--muted);letter-spacing:.03em}
+.nodo{cursor:pointer;transition:opacity .25s}
+.nodo rect.caja{fill:var(--surface);stroke:var(--line);stroke-width:1.2}
+.nodo text.t{font-family:var(--f-body);font-weight:600;font-size:13px;fill:var(--ink)}
+.nodo text.s{font-family:var(--f-mono);font-size:10px;fill:var(--muted)}
+.nodo:hover rect.caja{stroke:var(--accent)}
+.nodo:focus{outline:none}
+.nodo:focus-visible rect.caja{stroke:var(--accent);stroke-width:2.4}
+.nodo.on rect.caja{stroke:var(--accent);stroke-width:2.2}
+.nodo.sel rect.caja{stroke:var(--ink);stroke-width:2.6}
+.nodo.dim{opacity:.22}
+.arista{transition:opacity .25s}
+.arista path{fill:none;stroke:var(--muted);stroke-width:1.6;marker-end:url(#flecha)}
+.arista.on path{stroke:var(--accent);stroke-width:3;marker-end:url(#flechaOn)}
+.arista.dim{opacity:.12}
+.et{font-family:var(--f-mono);font-size:10px;fill:var(--muted);paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round;pointer-events:none}
+.arista.on .et{fill:var(--accent);font-weight:600}
+.num{font-family:var(--f-mono);font-size:10px;font-weight:700;fill:#fff}
+
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.82rem;color:var(--muted)}
+.leyenda span{display:inline-flex;align-items:center;gap:6px}
+.leyenda i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+section.extra{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px}
+section.extra h2{margin:0;font-size:1.15rem}
+.tabla{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:620px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">qa-base-template · Selenium + TestNG + Cucumber + Maven</div>
+    <h1>¿Qué pasa cuando escribo <code>mvn test</code>?</h1>
+    <p>El proyecto está organizado en capas, de arriba hacia abajo. Elige una ruta (BDD con Cucumber o TestNG puro) y avanza paso a paso para ver qué clase llama a cuál. Haz clic en cualquier pieza para ver qué es y dónde está su código.</p>
+  </header>
+
+  <div class="barra">
+    <div class="seg" role="group" aria-label="Ruta">
+      <button type="button" data-ruta="bdd" aria-pressed="true">Ruta BDD (Cucumber)</button>
+      <button type="button" data-ruta="testng" aria-pressed="false">Ruta TestNG</button>
+    </div>
+    <div class="nav-pasos">
+      <button type="button" class="btn" id="ant">◀ Anterior</button>
+      <span class="contador" id="contador"></span>
+      <button type="button" class="btn" id="sig">Siguiente ▶</button>
+      <button type="button" class="btn" id="inicio">Vista general</button>
+    </div>
+    <span class="ayuda">Atajo: flechas ← → del teclado</span>
+  </div>
+
+  <div class="leyenda" id="leyenda"></div>
+
+  <div class="grid">
+    <div class="lienzo"><svg id="mapa" viewBox="0 0 1160 712" role="img" aria-label="Mapa de capas del proyecto"></svg></div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <section class="extra">
+    <h2>Las dos rutas comparadas</h2>
+    <p>Las dos formas de testear comparten las mismas páginas (<code>LoginPage</code>, <code>BasePage</code>) y el mismo <code>DriverFactory</code>. Cambia solo quién organiza el test.</p>
+    <div class="tabla"><table>
+      <thead><tr><th></th><th>TestNG puro</th><th>BDD con Cucumber</th></tr></thead>
+      <tbody>
+        <tr><td>Dónde se describe el caso</td><td>Método <code>@Test</code> en <code>LoginTest.java</code></td><td>Un archivo <code>.feature</code> por caso (Gherkin, lenguaje natural)</td></tr>
+        <tr><td>Dónde están los datos</td><td>Escritos en el código del test</td><td>En cada paso del feature, entre comillas (los captura <code>{string}</code>)</td></tr>
+        <tr><td>Quién abre el navegador</td><td><code>BaseTest</code> con <code>@BeforeMethod</code></td><td><code>Hooks</code> con <code>@Before</code></td></tr>
+        <tr><td>Quién lo cierra</td><td><code>BaseTest</code> con <code>@AfterMethod</code> (antes marca el resultado en Extent)</td><td><code>Hooks</code> con <code>@After</code> (antes marca el resultado en Extent)</td></tr>
+        <tr><td>Quién traduce a acciones</td><td>El mismo test llama a <code>LoginPage</code></td><td><code>LoginSteps</code> une cada frase con un método</td></tr>
+        <tr><td>Reportes</td><td><code>target/surefire-reports</code></td><td><code>target/cucumber-report.html</code> y <code>cucumber.json</code> (además de Surefire)</td></tr>
+        <tr><td>Reporte común</td><td colspan="2"><code>target/reportes/extent-report.html</code> (ExtentReports, screenshot si falla) y log en <code>target/logs/ejecucion.log</code></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+</div>
+
+<script>
+// ---------- Geometría ----------
+const W = 160, H = 54;
+const COL = {A:130, B:340, C:550, D:760, E:970};
+const laneTop = i => 10 + i * 100;
+
+const CARRILES = [
+  {n:"1 · Maven: construye y lanza",              c:"var(--c0)"},
+  {n:"2 · TestNG: organiza la ejecución",         c:"var(--c1)"},
+  {n:"3 · Cucumber / Tests: describen el caso",   c:"var(--c2)"},
+  {n:"4 · Page Objects: cómo se usa cada página", c:"var(--c3)"},
+  {n:"5 · Core: configuración y driver",          c:"var(--c4)"},
+  {n:"6 · Librerías y soporte: Selenium, logs y reporte", c:"var(--c5)"},
+  {n:"7 · Navegador y resultados",                c:"var(--c6)"}
+];
+
+// ---------- Piezas ----------
+const NODOS = {
+  mvn:{c:0,col:"A",t:"mvn test",s:"PowerShell",archivo:"(comando en la terminal)",
+    html:`<p>El comando que escribes en PowerShell. Maven lee el <code>pom.xml</code>, descarga las dependencias que falten (Selenium, TestNG, Cucumber, Logback, ExtentReports) en tu carpeta <code>~/.m2</code> y recorre su <b>ciclo de vida</b> en orden:</p>
+    <ul><li><code>compile</code>: compila <code>src/main/java</code></li><li><code>test-compile</code>: compila <code>src/test/java</code></li><li><code>test</code>: ejecuta los tests</li></ul>
+    <p>Si algo no compila, se detiene antes de abrir cualquier navegador.</p>`},
+  surefire:{c:0,col:"B",t:"Surefire",s:"maven-surefire-plugin",archivo:"pom.xml → <build><plugins>",
+    html:`<p><b>Clase que no conocías:</b> Surefire es el <i>plugin</i> de Maven encargado de ejecutar los tests en la fase <code>test</code>.</p>
+    <p>En el <code>pom.xml</code> está configurado con <code>suiteXmlFile</code>: en vez de buscar tests por nombre, le entrega el control a TestNG con la suite <code>testng.xml</code>.</p>
+    <p>Guarda resultados en <code>target/surefire-reports</code>.</p>`},
+  testng:{c:1,col:"A",t:"testng.xml",s:"suite de TestNG",archivo:"src/test/resources/testng.xml",
+    html:`<p>La <b>suite</b>: la lista de lo que se ejecuta y en qué orden. Tiene dos bloques <code>&lt;test&gt;</code>:</p>
+    <ul><li><b>TestNG - Login</b> → <code>LoginTest</code> (se ejecuta primero)</li><li><b>BDD - Cucumber</b> → <code>TestRunner</code></li></ul>
+    <p>Una clase de test nueva que no esté registrada aquí <b>no corre</b> con <code>mvn test</code>.</p>`},
+  runner:{c:1,col:"B",t:"TestRunner",s:"runner de Cucumber",archivo:"src/test/java/com/qa/runners/TestRunner.java",
+    html:`<p>El puente entre TestNG y Cucumber. Está casi vacía, pero hereda de <code>AbstractTestNGCucumberTests</code>.</p>
+    <p><b>Clase que no conocías:</b> <code>AbstractTestNGCucumberTests</code> viene de la librería <code>cucumber-testng</code>. Trae un método <code>@Test</code> con un <code>@DataProvider</code> que entrega <b>un escenario por vez</b>: así TestNG ve cada escenario como un caso de prueba.</p>
+    <p><code>@CucumberOptions</code> configura:</p>
+    <ul><li><code>features</code>: dónde están los <code>.feature</code></li><li><code>glue</code>: paquetes con steps y hooks</li><li><code>plugin</code>: reportes (consola, HTML, JSON)</li></ul>`},
+  logintest:{c:1,col:"E",t:"LoginTest",s:"@Test de TestNG",archivo:"src/test/java/com/qa/tests/LoginTest.java",
+    html:`<p>Tests TestNG «clásicos»: cada método <code>@Test</code> es un caso (<code>loginExitoso</code>, <code>loginFallido</code>). Los datos están en el propio código y la validación se hace con <code>Assert</code>.</p>
+    <p>Hereda de <code>BaseTest</code>, por eso no tiene que abrir ni cerrar el navegador.</p>`},
+  feature:{c:2,col:"A",t:"*.feature",s:"Gherkin · 1 por caso",archivo:"src/test/resources/features/",
+    html:`<p>Los casos de prueba escritos en lenguaje natural (Gherkin): <code>Given</code> / <code>When</code> / <code>Then</code> / <code>And</code>. Hay un archivo por caso:</p>
+    <ul><li><code>CP001_login_exitoso.feature</code> → <b>CP001</b>: mensaje de bienvenida + redirección a <code>/secure</code></li><li><code>CP002_login_fallido.feature</code> → <b>CP002</b>: mensaje de error + sigue en <code>/login</code></li></ul>
+    <p>El prefijo <code>CPxxx</code> calza 1 a 1 con el ID del caso en la planilla Excel de casos de prueba (base para un futuro <i>data driven testing</i>).</p>
+    <p>Cucumber lee <b>todos</b> los <code>.feature</code> de la carpeta: para agregar un caso nuevo basta con crear otro archivo.</p>
+    <p>Tags para filtrar: <code>@login</code> (los dos), <code>@exitoso</code>, <code>@fallido</code>, <code>@smoke</code>.</p>`},
+  hooks:{c:2,col:"B",t:"Hooks",s:"@Before / @After",archivo:"src/test/java/com/qa/hooks/Hooks.java",
+    html:`<p>Código que Cucumber ejecuta <b>antes y después de cada escenario</b>. Ojo: <code>@Before</code> y <code>@After</code> se importan de <code>io.cucumber.java</code>, no de TestNG.</p>
+    <ul><li><code>setUp(Scenario)</code>: escribe en el log, crea la entrada del escenario en <code>ExtentManager</code> (los tags quedan como categorías) y pide el navegador a <code>DriverFactory</code></li><li><code>tearDown(Scenario)</code>: si el escenario falló, adjunta un screenshot al reporte de Cucumber; marca el resultado en Extent y <b>después</b> cierra el navegador</li></ul>
+    <p>Es el equivalente BDD de <code>BaseTest</code>.</p>`},
+  steps:{c:2,col:"C",t:"LoginSteps",s:"Given / When / Then",archivo:"src/test/java/com/qa/steps/LoginSteps.java",
+    html:`<p>Traduce cada frase del feature a código Java. Cucumber compara el texto del paso con el texto de la anotación.</p>
+    <p><code>{string}</code> captura lo que va entre comillas y lo pasa como parámetro del método.</p>
+    <p>Guarda <code>loginPage</code> como atributo: Cucumber crea una instancia nueva de <code>LoginSteps</code> <b>por escenario</b>, así el Given, el When y el Then comparten la misma página.</p>`},
+  basetest:{c:2,col:"E",t:"BaseTest",s:"setUp / tearDown",archivo:"src/test/java/com/qa/tests/BaseTest.java",
+    html:`<p>Clase madre de los tests TestNG.</p>
+    <ul><li><code>@BeforeMethod</code>: antes de cada <code>@Test</code>, crea su entrada en <code>ExtentManager</code> (usa la <code>description</code> del <code>@Test</code>) y pide el driver a <code>DriverFactory</code></li><li><code>@AfterMethod</code>: recibe el <code>ITestResult</code>, marca pasó/falló/omitido en Extent (con screenshot si falló) y cierra el navegador</li></ul>
+    <p>También tiene un <code>log</code> protegido que heredan los tests.</p>
+    <p><code>alwaysRun = true</code> asegura que se ejecuten aunque el test falle, para no dejar navegadores abiertos.</p>`},
+  loginpage:{c:3,col:"C",t:"LoginPage",s:"page object",archivo:"src/main/java/com/qa/pages/LoginPage.java",
+    html:`<p>Representa la página <code>/login</code>. Contiene:</p>
+    <ul><li><b>Locators</b>: cómo encontrar cada elemento (<code>By.id("username")</code>, etc.)</li><li><b>Acciones de negocio</b>: <code>login(usuario, clave)</code>, <code>obtenerMensaje()</code></li><li><code>ruta()</code> → <code>"/login"</code></li></ul>
+    <p>Dice <b>qué</b> hacer; el <b>cómo</b> (esperas, clics, escritura) lo hereda de <code>BasePage</code>.</p>`},
+  basepage:{c:3,col:"D",t:"BasePage",s:"clase madre (abstract)",archivo:"src/main/java/com/qa/pages/BasePage.java",
+    html:`<p>Toda la lógica común de interacción con el navegador, para que ninguna página la repita:</p>
+    <ul><li><code>abrir()</code>: navega a <code>BASE_URL + ruta()</code></li><li><code>esperarCarga()</code>: espera <code>document.readyState == "complete"</code></li><li><code>click</code>, <code>escribir</code>, <code>obtenerTexto</code>: siempre <b>esperan</b> antes de actuar</li><li><code>estaVisible</code>: true/false sin hacer fallar el test</li></ul>
+    <p>Usa <code>Config</code> (URL y timeout), <code>WebDriver</code> y <code>WebDriverWait</code>.</p>
+    <p>Tiene un <code>log</code> protegido (SLF4J) que heredan todas las páginas: <code>abrir()</code> registra la URL en INFO; <code>click</code>, <code>escribir</code> y <code>obtenerTexto</code> registran en DEBUG. <code>escribir()</code> nunca registra el texto (podría ser una clave).</p>`},
+  config:{c:4,col:"A",t:"Config",s:"propiedades -D",archivo:"src/main/java/com/qa/core/Config.java",
+    html:`<p>Toda la configuración en un lugar. Cada valor se lee con <code>System.getProperty("nombre", "valorPorDefecto")</code>:</p>
+    <ul><li><code>baseUrl</code> → https://the-internet.herokuapp.com</li><li><code>browser</code> → chrome</li><li><code>headless</code> → false</li><li><code>timeout</code> → 10 segundos</li></ul>
+    <p>Se cambian desde la terminal: <code>mvn test -Dbrowser=firefox</code>. Son <code>static final</code>: se leen una sola vez al cargar la clase.</p>`},
+  df:{c:4,col:"B",t:"DriverFactory",s:"ThreadLocal<WebDriver>",archivo:"src/main/java/com/qa/core/DriverFactory.java",
+    html:`<p>La «fábrica» de navegadores. Es el <b>único</b> lugar donde se crean y cierran.</p>
+    <ul><li><code>getDriver()</code>: si no hay navegador, lo crea (según <code>Config.BROWSER</code> y <code>HEADLESS</code>) y lo maximiza; si ya hay, devuelve el mismo</li><li><code>quitDriver()</code>: cierra el navegador y lo olvida</li></ul>
+    <p>Registra en el log cada vez que abre o cierra un navegador.</p>
+    <p><b>Clase que no conocías:</b> <code>ThreadLocal</code> guarda un valor <b>por hilo</b>. Si algún día los tests corren en paralelo, cada hilo tendrá su propio navegador sin mezclarse.</p>`},
+  webdriver:{c:5,col:"B",t:"WebDriver",s:"Chrome · Firefox · Edge",archivo:"librería selenium-java (pom.xml)",
+    html:`<p><b>Clase que no conocías:</b> <code>WebDriver</code> es la interfaz de Selenium para controlar un navegador. <code>ChromeDriver</code>, <code>FirefoxDriver</code> y <code>EdgeDriver</code> la implementan.</p>
+    <p>Por debajo habla con un ejecutable (<code>chromedriver.exe</code>) mediante el protocolo estándar <b>W3C WebDriver</b>, y ese ejecutable mueve el navegador real.</p>
+    <p>Desde Selenium 4.6, <b>Selenium Manager</b> descarga ese ejecutable automáticamente: por eso el proyecto no lo configura en ningún lado.</p>`},
+  wait:{c:5,col:"D",t:"WebDriverWait",s:"+ ExpectedConditions",archivo:"librería selenium-java (pom.xml)",
+    html:`<p><b>Clases que no conocías:</b></p>
+    <ul><li><code>WebDriverWait</code>: <b>espera explícita</b>. Repite una condición cada 500 ms hasta que se cumpla o se acabe el tiempo (<code>Config.TIMEOUT</code>). Si se acaba, lanza <code>TimeoutException</code>.</li><li><code>ExpectedConditions</code>: condiciones listas para usar, como <code>visibilityOfElementLocated</code> o <code>elementToBeClickable</code>.</li></ul>
+    <p>Es lo que evita los errores de «elemento no encontrado» cuando la página tarda en cargar.</p>`},
+  logback:{c:5,col:"A",t:"SLF4J + Logback",s:"logs",archivo:"src/test/resources/logback-test.xml",
+    html:`<p><b>Clases que no conocías:</b></p>
+    <ul><li><b>SLF4J</b>: la API de logs que usa el código (<code>Logger</code>, <code>LoggerFactory</code>, <code>log.info("Abriendo {}", url)</code>; el <code>{}</code> se reemplaza por el valor).</li><li><b>Logback</b>: la implementación que decide dónde y con qué formato se escribe.</li></ul>
+    <p>Escriben logs <code>DriverFactory</code>, <code>BasePage</code> (y sus páginas), <code>BaseTest</code> y <code>Hooks</code>. Salida: consola y <code>target/logs/ejecucion.log</code>.</p>
+    <p>Niveles: <code>com.qa</code> en INFO (más detalle con <code>mvn test "-Dlog.nivel=DEBUG"</code>), librerías externas solo WARN.</p>
+    <p>Ojo: TestNG trae <code>slf4j-api</code> 1.7; el pom declara la 2.x a mano, si no los logs no aparecen.</p>`},
+  extent:{c:5,col:"E",t:"ExtentManager",s:"reporte HTML único",archivo:"src/test/java/com/qa/reportes/ExtentManager.java",
+    html:`<p>Administra el reporte de <b>ExtentReports</b>: un solo HTML para las dos rutas, con una entrada por <code>@Test</code> o escenario.</p>
+    <ul><li><code>iniciarTest(nombre, categorias...)</code>: lo llaman <code>BaseTest</code> y <code>Hooks</code> al empezar</li><li><code>marcarResultado(fallo, error)</code>: pasó o falló; si falló, pide el screenshot al navegador de <code>DriverFactory</code> y lo guarda dentro del HTML (base64)</li><li><code>flush()</code> tras cada test: el HTML queda completo aunque se ejecute una sola clase</li></ul>
+    <p>Por eso el resultado se marca <b>antes</b> de <code>quitDriver()</code>: el screenshot necesita el navegador abierto.</p>
+    <p>El resumen muestra navegador, headless y URL base (de <code>Config</code>).</p>`},
+  navegador:{c:6,col:"C",t:"Navegador",s:"herokuapp.com/login",archivo:"https://the-internet.herokuapp.com/login",
+    html:`<p>Un Chrome real (o Firefox/Edge) que Selenium abre y controla. Con <code>-Dheadless=true</code> funciona sin mostrar la ventana.</p>
+    <p>El sitio de práctica acepta <code>tomsmith</code> / <code>SuperSecretPassword!</code> y muestra el resultado en el elemento <code>#flash</code>.</p>`},
+  reportes:{c:6,col:"E",t:"Reportes",s:"carpeta target/",archivo:"target/",
+    html:`<ul><li>Consola: plugin <code>pretty</code> de Cucumber y el resumen de Maven (<code>Tests run</code>, <code>Failures</code>, <code>BUILD SUCCESS/FAILURE</code>)</li><li><code>target/cucumber-report.html</code>: reporte BDD con screenshots de los fallos</li><li><code>target/cucumber.json</code>: el mismo resultado para otras herramientas</li><li><code>target/reportes/extent-report.html</code>: reporte <b>único</b> de ExtentReports para TestNG y Cucumber, con screenshot en los fallos</li><li><code>target/logs/ejecucion.log</code>: log completo de la ejecución</li><li><code>target/surefire-reports/</code>: reportes de TestNG/Surefire</li></ul>
+    <p>Abrir el reporte desde PowerShell: <code>Invoke-Item target/reportes/extent-report.html</code></p>
+    <p><code>mvn clean</code> borra toda la carpeta <code>target/</code>.</p>`}
+};
+// Carril de cada nodo
+const CARRIL_NODO = {mvn:0,surefire:0,testng:1,runner:1,logintest:1,feature:2,hooks:2,steps:2,basetest:2,loginpage:3,basepage:3,config:4,df:4,webdriver:5,wait:5,logback:5,extent:5,navegador:6,reportes:6};
+for (const id in NODOS){ const n = NODOS[id]; n.l = CARRIL_NODO[id]; n.x = COL[n.col]; n.y = laneTop(n.l) + 23; }
+
+// ---------- Conexiones ----------
+// d: trazo a mano cuando el automático cruzaría otras cajas.  lt: posición de la etiqueta (0..1)
+const ARISTAS = [
+  {id:"mvn-sure",       de:"mvn",      a:"surefire", et:"fase test"},
+  {id:"sure-testng",    de:"surefire", a:"testng",   et:"suiteXmlFile"},
+  {id:"testng-runner",  de:"testng",   a:"runner",   et:"BDD"},
+  {id:"testng-logintest",de:"testng",  a:"logintest",et:"<test> TestNG", d:"M 270,133 C 270,110 1050,110 1050,133", lt:.6},
+  {id:"runner-feature", de:"runner",   a:"feature",  et:"features"},
+  {id:"runner-hooks",   de:"runner",   a:"hooks",    et:"glue"},
+  {id:"runner-steps",   de:"runner",   a:"steps",    et:"glue"},
+  {id:"feature-steps",  de:"feature",  a:"steps",    et:"texto del paso", d:"M 210,287 C 210,320 630,320 630,287", lt:.27},
+  {id:"logintest-basetest",de:"logintest",a:"basetest",et:"extends"},
+  {id:"basetest-df",    de:"basetest", a:"df",       et:"getDriver()", d:"M 1050,287 V 475 H 500", lt:.62},
+  {id:"hooks-df",       de:"hooks",    a:"df",       et:"getDriver()"},
+  {id:"steps-loginpage",de:"steps",    a:"loginpage",et:"new LoginPage()"},
+  {id:"logintest-loginpage",de:"logintest",a:"loginpage",et:"new LoginPage()", d:"M 970,160 C 830,160 760,300 680,333", lt:.35},
+  {id:"loginpage-basepage",de:"loginpage",a:"basepage",et:"extends"},
+  {id:"df-config",      de:"df",       a:"config",   et:"lee"},
+  {id:"df-webdriver",   de:"df",       a:"webdriver",et:"new ChromeDriver()"},
+  {id:"basepage-wait",  de:"basepage", a:"wait",     et:"wait.until()", lt:.4},
+  {id:"basepage-webdriver",de:"basepage",a:"webdriver",et:"driver.get()", d:"M 800,387 C 800,470 480,470 480,533", lt:.45},
+  {id:"wait-webdriver", de:"wait",     a:"webdriver",et:"pregunta cada 500 ms"},
+  {id:"webdriver-nav",  de:"webdriver",a:"navegador",et:"protocolo W3C"},
+  {id:"basetest-extent",de:"basetest", a:"extent",   et:"reporte", d:"M 1110,287 V 533", lt:.5},
+  {id:"hooks-extent",   de:"hooks",    a:"extent",   et:"iniciarTest()", d:"M 500,275 H 530 V 405 H 1010 V 533", lt:.55},
+  {id:"extent-reportes",de:"extent",   a:"reportes", et:"extent-report.html"},
+  {id:"df-logback",     de:"df",       a:"logback",  et:"log.info()"},
+  {id:"logback-reportes",de:"logback", a:"reportes", et:"ejecucion.log", d:"M 210,587 V 700 H 1050 V 687", lt:.77}
+];
+
+function trazo(e){
+  if (e.d) return e.d;
+  const f = NODOS[e.de], t = NODOS[e.a];
+  const fcx = f.x + W/2, tcx = t.x + W/2;
+  if (f.l === t.l){
+    const y = f.y + H/2;
+    return t.x > f.x ? `M ${f.x+W},${y} H ${t.x}` : `M ${f.x},${y} H ${t.x+W}`;
+  }
+  const y1 = f.y + H, y2 = t.y, ym = (y1 + y2) / 2;
+  if (fcx === tcx) return `M ${fcx},${y1} V ${y2}`;
+  return `M ${fcx},${y1} C ${fcx},${ym} ${tcx},${ym} ${tcx},${y2}`;
+}
+
+// ---------- Recorridos ----------
+const COMUNES = [
+  {t:"Escribes mvn test", n:["mvn"], a:[],
+   p:"En PowerShell, dentro de la carpeta del proyecto. Maven lee el pom.xml, compila src/main y src/test, y llega a la fase test. Si hay un error de compilación, se detiene aquí.",
+   code:`mvn test\nmvn test -Dbrowser=firefox -Dheadless=true`},
+  {t:"Surefire toma el control", n:["mvn","surefire"], a:["mvn-sure"],
+   p:"En la fase test, Maven delega en el plugin Surefire. Según el pom.xml, Surefire no busca tests por su cuenta: usa la suite testng.xml.",
+   code:`<plugin>\n  <artifactId>maven-surefire-plugin</artifactId>\n  <configuration>\n    <suiteXmlFiles>\n      <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>\n    </suiteXmlFiles>\n  </configuration>\n</plugin>`}
+];
+
+const RUTAS = {
+ bdd: [
+  ...COMUNES,
+  {t:"TestNG lee la suite", n:["surefire","testng"], a:["sure-testng"],
+   p:"testng.xml tiene dos bloques <test> que corren en orden: primero «TestNG - Login» y después «BDD - Cucumber». En esta ruta seguimos el segundo (la otra está en «Ruta TestNG»).",
+   code:`<test name="BDD - Cucumber">\n  <classes>\n    <class name="com.qa.runners.TestRunner"/>\n  </classes>\n</test>`},
+  {t:"TestRunner arranca Cucumber", n:["testng","runner"], a:["testng-runner"],
+   p:"Para TestNG, TestRunner es una clase de test más. Pero hereda de AbstractTestNGCucumberTests, que le entrega a TestNG un escenario por vez. @CucumberOptions dice dónde están los features, el glue y qué reportes generar.",
+   code:`@CucumberOptions(\n    features = "src/test/resources/features",\n    glue = {"com.qa.steps", "com.qa.hooks"},\n    plugin = {"pretty", "html:target/cucumber-report.html",\n              "json:target/cucumber.json"})\npublic class TestRunner extends AbstractTestNGCucumberTests { }`},
+  {t:"Cucumber lee los features", n:["runner","feature"], a:["runner-feature"],
+   p:"Cucumber lee todos los .feature de la carpeta: CP001_login_exitoso.feature y CP002_login_fallido.feature (el prefijo CP calza con la planilla Excel de casos). Cada escenario se ejecuta completo, por separado y con su propio navegador. Seguimos CP001.",
+   code:`# CP001_login_exitoso.feature\n@login @exitoso\nFeature: Login exitoso\n\n  @smoke\n  Scenario: CP001 - Login exitoso con credenciales válidas\n    Given que el usuario está en la página de login\n    When ingresa el usuario "tomsmith" y la clave "SuperSecretPassword!"\n    Then ve el mensaje "You logged into a secure area!"\n    And es redirigido al área segura`},
+  {t:"Carga el glue: Hooks y Steps", n:["runner","hooks","steps"], a:["runner-hooks","runner-steps"],
+   p:"glue son los paquetes donde Cucumber busca código anotado: com.qa.hooks (@Before/@After) y com.qa.steps (@Given/@When/@Then). Si creas un paquete nuevo de steps y no lo agregas aquí, Cucumber dirá que los pasos están «undefined».",
+   code:`glue = {"com.qa.steps", "com.qa.hooks"}`},
+  {t:"@Before: log, reporte y navegador", n:["hooks","extent","logback","df","config","webdriver","navegador"], a:["hooks-extent","hooks-df","df-logback","df-config","df-webdriver","webdriver-nav"],
+   p:"Antes del escenario, Hooks.setUp() escribe en el log, crea la entrada del escenario en ExtentManager (los tags quedan como categorías) y llama a DriverFactory.getDriver(). Como en este hilo todavía no hay navegador, lo crea según Config.BROWSER y Config.HEADLESS, lo maximiza y lo guarda en el ThreadLocal.",
+   code:`// Hooks.java\n@Before\npublic void setUp(Scenario scenario) {\n    log.info("===== Inicio escenario: {}", scenario.getName());\n    ExtentManager.iniciarTest(scenario.getName(), tags...);\n    DriverFactory.getDriver();\n}\n\n// DriverFactory.java\nif (DRIVER.get() == null) {\n    DRIVER.set(crearDriver());   // new ChromeDriver(o)\n}`},
+  {t:"Given: abrir la página de login", n:["feature","steps","loginpage","basepage","webdriver","navegador"], a:["feature-steps","steps-loginpage","loginpage-basepage","basepage-webdriver","webdriver-nav"],
+   p:"Cucumber compara la frase con las anotaciones y ejecuta abrirLogin(). Ese método crea un LoginPage y llama a abrir(), que está en BasePage: arma Config.BASE_URL + ruta() = …/login, navega y espera a que la página termine de cargar.",
+   code:`// LoginSteps.java\n@Given("que el usuario está en la página de login")\npublic void abrirLogin() {\n    loginPage = new LoginPage(DriverFactory.getDriver());\n    loginPage.abrir();          // método heredado de BasePage\n}\n\n// BasePage.java\npublic void abrir() {\n    driver.get(Config.BASE_URL + ruta());\n    esperarCarga();\n}`},
+  {t:"When: escribir credenciales y entrar", n:["feature","steps","loginpage","basepage","wait","webdriver","navegador"], a:["feature-steps","steps-loginpage","loginpage-basepage","basepage-wait","wait-webdriver","webdriver-nav"],
+   p:"{string} captura «tomsmith» y «SuperSecretPassword!» y los pasa como parámetros. LoginPage.login() solo dice QUÉ hacer; el CÓMO está en BasePage: escribir() espera que el campo sea visible, lo limpia y escribe; click() espera que el botón sea clickeable. Esas esperas las hace WebDriverWait.",
+   code:`// LoginSteps.java\n@When("ingresa el usuario {string} y la clave {string}")\npublic void ingresarCredenciales(String usuario, String clave) {\n    loginPage.login(usuario, clave);\n}\n\n// LoginPage.java\nescribir(txtUsuario, usuario);   // BasePage\nescribir(txtClave, clave);       // BasePage\nclick(btnLogin);                 // BasePage`},
+  {t:"Then / And: validar", n:["feature","steps","loginpage","basepage","wait","webdriver"], a:["feature-steps","steps-loginpage","loginpage-basepage","basepage-wait","wait-webdriver"],
+   p:"Then: obtenerMensaje() llama a obtenerTexto(#flash) de BasePage y el step lo compara con Assert. And: getUrlActual() (también de BasePage) confirma la redirección a /secure. Si algo no coincide, lanza AssertionError y el escenario queda «failed».",
+   code:`@Then("ve el mensaje {string}")\npublic void validarMensaje(String mensajeEsperado) {\n    String obtenido = loginPage.obtenerMensaje();\n    Assert.assertTrue(obtenido.contains(mensajeEsperado), ...);\n}\n\n// "And" usa cualquier anotación: Cucumber solo compara el texto\n@Then("es redirigido al área segura")\npublic void validarAreaSegura() {\n    Assert.assertTrue(loginPage.getUrlActual().contains("/secure"), ...);\n}`},
+  {t:"@After: resultado, screenshot y cierre", n:["hooks","extent","df","webdriver","reportes"], a:["hooks-extent","extent-reportes","hooks-df","df-webdriver"],
+   p:"Se ejecuta después de cada escenario, pase o falle. Si falló, adjunta un screenshot al reporte de Cucumber. Luego marca el resultado en ExtentManager (con su propio screenshot si falló) y recién ahí quitDriver() cierra el navegador: el screenshot necesita el navegador abierto.",
+   code:`@After\npublic void tearDown(Scenario scenario) {\n    if (scenario.isFailed()) {\n        byte[] captura = ((TakesScreenshot) DriverFactory.getDriver())\n                .getScreenshotAs(OutputType.BYTES);\n        scenario.attach(captura, "image/png", scenario.getName());\n    }\n    ExtentManager.marcarResultado(scenario.isFailed(), null);\n    DriverFactory.quitDriver();   // siempre al final\n}`},
+  {t:"Se repite con CP002 y se generan reportes", n:["runner","feature","extent","logback","reportes"], a:["runner-feature","extent-reportes","logback-reportes"],
+   p:"Los pasos 7 a 11 se repiten con CP002 (login fallido: valida el mensaje de error y que siga en /login). Al terminar, Cucumber escribe sus reportes, Surefire escribe los suyos y Maven muestra el resumen en la consola. El reporte de Extent y el log ya se fueron escribiendo durante la ejecución.",
+   code:`Tests run: 4, Failures: 0, Errors: 0, Skipped: 0\nBUILD SUCCESS\n\n(4 = 2 tests TestNG + 2 escenarios Cucumber)\n\nInvoke-Item target/reportes/extent-report.html\nGet-Content target/logs/ejecucion.log`}
+ ],
+ testng: [
+  ...COMUNES,
+  {t:"TestNG lee la suite", n:["surefire","testng"], a:["sure-testng"],
+   p:"testng.xml tiene dos bloques <test> que corren en orden. El primero es «TestNG - Login»: es el que seguimos en esta ruta.",
+   code:`<test name="TestNG - Login">\n  <classes>\n    <class name="com.qa.tests.LoginTest"/>\n  </classes>\n</test>`},
+  {t:"TestNG ejecuta LoginTest", n:["testng","logintest","basetest"], a:["testng-logintest","logintest-basetest"],
+   p:"LoginTest extends BaseTest, así que hereda sus métodos @BeforeMethod y @AfterMethod. Cada método @Test es un caso: loginExitoso y loginFallido. Seguimos loginExitoso.",
+   code:`public class LoginTest extends BaseTest {\n    @Test(description = "Login exitoso con credenciales válidas")\n    public void loginExitoso() { ... }\n\n    @Test(description = "Login fallido con usuario inválido")\n    public void loginFallido() { ... }\n}`},
+  {t:"@BeforeMethod: log, reporte y navegador", n:["basetest","extent","logback","df","config","webdriver","navegador"], a:["basetest-extent","basetest-df","df-logback","df-config","df-webdriver","webdriver-nav"],
+   p:"Antes de cada @Test, BaseTest.setUp() recibe el Method que se va a ejecutar: escribe en el log, crea la entrada en ExtentManager con la description del @Test y le pide el driver a DriverFactory. Es el mismo mecanismo del @Before de Hooks: solo cambia quién lo llama (TestNG en vez de Cucumber).",
+   code:`@BeforeMethod(alwaysRun = true)\npublic void setUp(Method metodo) {\n    String nombre = metodo.getAnnotation(Test.class).description();\n    log.info("===== Inicio test: {}", nombre);\n    ExtentManager.iniciarTest(nombre, "TestNG", getClass().getSimpleName());\n    driver = DriverFactory.getDriver();\n}`},
+  {t:"Abrir la página", n:["logintest","loginpage","basepage","webdriver","navegador"], a:["logintest-loginpage","loginpage-basepage","basepage-webdriver","webdriver-nav"],
+   p:"El test crea new LoginPage(driver) y llama a abrir(). Desde aquí el camino es igual al de la ruta BDD: las páginas no saben si las llama un test TestNG o un step de Cucumber.",
+   code:`LoginPage login = new LoginPage(driver);\nlogin.abrir();   // BasePage: driver.get(BASE_URL + "/login")`},
+  {t:"login() con datos fijos", n:["logintest","loginpage","basepage","wait","webdriver","navegador"], a:["logintest-loginpage","loginpage-basepage","basepage-wait","wait-webdriver","webdriver-nav"],
+   p:"Los datos están escritos en el código Java del test (en BDD van en el texto del feature). LoginPage.login() usa escribir() y click() de BasePage, que esperan con WebDriverWait antes de actuar.",
+   code:`login.login("tomsmith", "SuperSecretPassword!");`},
+  {t:"Validar con Assert", n:["logintest","loginpage","basepage","wait","webdriver"], a:["logintest-loginpage","loginpage-basepage","basepage-wait","wait-webdriver"],
+   p:"Valida dos cosas: el mensaje de #flash (obtenerMensaje → obtenerTexto) y que la URL contenga /secure (getUrlActual, también de BasePage).",
+   code:`Assert.assertTrue(login.obtenerMensaje()\n        .contains("You logged into a secure area!"), ...);\nAssert.assertTrue(login.getUrlActual().contains("/secure"), ...);`},
+  {t:"@AfterMethod: resultado y cierre", n:["basetest","extent","df","webdriver","reportes"], a:["basetest-extent","extent-reportes","basetest-df","df-webdriver"],
+   p:"TestNG entrega el ITestResult: BaseTest marca pasó, falló u omitido en ExtentManager (con screenshot y el error si falló) y después cierra el navegador. alwaysRun = true asegura que se ejecute aunque el test falle, para no dejar navegadores abiertos.",
+   code:`@AfterMethod(alwaysRun = true)\npublic void tearDown(ITestResult resultado) {\n    switch (resultado.getStatus()) {\n        case ITestResult.FAILURE -> ExtentManager.marcarResultado(true, resultado.getThrowable());\n        case ITestResult.SKIP    -> ExtentManager.marcarOmitido("Test omitido");\n        default                  -> ExtentManager.marcarResultado(false, null);\n    }\n    DriverFactory.quitDriver();   // siempre al final\n}`},
+  {t:"Se repite con loginFallido y reportes", n:["logintest","extent","logback","reportes"], a:["extent-reportes","logback-reportes"],
+   p:"Lo mismo para loginFallido, con su propio navegador. Los resultados quedan en el reporte de Extent (junto con los escenarios BDD), en el log y en target/surefire-reports. Después la suite sigue con el bloque BDD (la otra ruta).",
+   code:`target/reportes/extent-report.html\ntarget/logs/ejecucion.log\ntarget/surefire-reports/\n  index.html\n  emailable-report.html`}
+ ]
+};
+
+// ---------- Dibujo ----------
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("mapa");
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+
+const defs = el("defs", {}, svg);
+[["flecha","var(--muted)"],["flechaOn","var(--accent)"]].forEach(([id,color]) => {
+  const m = el("marker", {id, viewBox:"0 0 10 10", refX:"9", refY:"5", markerWidth:"7", markerHeight:"7", orient:"auto-start-reverse"}, defs);
+  el("path", {d:"M0,0 L10,5 L0,10 z", style:`fill:${color}`}, m);
+});
+
+CARRILES.forEach((c, i) => {
+  const g = el("g", {class: "carril" + (i % 2 ? " par" : "")}, svg);
+  el("rect", {x:0, y:laneTop(i), width:1160, height:100}, g);
+  el("rect", {x:0, y:laneTop(i), width:4, height:100, style:`fill:${c.c}`}, g);
+  const t = el("text", {x:14, y:laneTop(i)+16}, g); t.textContent = c.n.split(":")[0];
+});
+
+const gAristas = el("g", {}, svg);
+const ARISTA_EL = {};
+ARISTAS.forEach(e => {
+  const g = el("g", {class:"arista"}, gAristas);
+  const p = el("path", {d: trazo(e)}, g);
+  const t = el("text", {class:"et"}, g); t.textContent = e.et;
+  ARISTA_EL[e.id] = {g, p, t, e};
+});
+
+const NODO_EL = {};
+for (const id in NODOS){
+  const n = NODOS[id];
+  const g = el("g", {class:"nodo", tabindex:"0", role:"button", "aria-label": n.t}, svg);
+  el("rect", {class:"caja", x:n.x, y:n.y, width:W, height:H, rx:8}, g);
+  el("rect", {x:n.x, y:n.y+8, width:4, height:H-16, rx:2, style:`fill:${CARRILES[n.l].c}`}, g);
+  const t = el("text", {class:"t", x:n.x+14, y:n.y+23}, g); t.textContent = n.t;
+  const s = el("text", {class:"s", x:n.x+14, y:n.y+40}, g); s.textContent = n.s;
+  const badge = el("g", {style:"display:none"}, g);
+  el("circle", {cx:n.x+W-4, cy:n.y+4, r:10, style:"fill:var(--accent)"}, badge);
+  const bt = el("text", {class:"num", x:n.x+W-4, y:n.y+8, "text-anchor":"middle"}, badge);
+  g.addEventListener("click", () => seleccionar(id));
+  g.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); seleccionar(id); } });
+  NODO_EL[id] = {g, badge, bt};
+}
+
+// Etiquetas de las flechas: se ubican sobre el trazo ya dibujado
+function ubicarEtiquetas(){
+  for (const id in ARISTA_EL){
+    const {p, t, e} = ARISTA_EL[id];
+    const len = p.getTotalLength();
+    const pt = p.getPointAtLength(len * (e.lt ?? .5));
+    const a = p.getPointAtLength(Math.max(0, len*(e.lt ?? .5) - 4)), b = p.getPointAtLength(Math.min(len, len*(e.lt ?? .5) + 4));
+    const vertical = Math.abs(b.x - a.x) < Math.abs(b.y - a.y);
+    if (vertical){ t.setAttribute("x", pt.x + 6); t.setAttribute("y", pt.y + 3); t.setAttribute("text-anchor","start"); }
+    else { t.setAttribute("x", pt.x); t.setAttribute("y", pt.y - 5); t.setAttribute("text-anchor","middle"); }
+  }
+}
+ubicarEtiquetas();
+
+// Leyenda
+const ley = document.getElementById("leyenda");
+CARRILES.forEach(c => { const s = document.createElement("span"); s.innerHTML = `<i style="background:${c.c}"></i>${c.n.replace(/^\d · /,"")}`; ley.appendChild(s); });
+
+// ---------- Estado ----------
+let ruta = "bdd", paso = 0, sel = null;
+try { const r = localStorage.getItem("arq-ruta"); if (r && RUTAS[r]) ruta = r; } catch (e) {}
+
+const panel = document.getElementById("panel");
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+function chips(ids){
+  return `<div class="chips">${ids.map(id => `<button type="button" data-nodo="${id}"><i style="background:${CARRILES[NODOS[id].l].c}"></i>${esc(NODOS[id].t)}</button>`).join("")}</div>`;
+}
+
+function render(){
+  const pasos = RUTAS[ruta];
+  document.querySelectorAll("[data-ruta]").forEach(b => b.setAttribute("aria-pressed", b.dataset.ruta === ruta));
+  document.getElementById("contador").textContent = paso ? `Paso ${paso} de ${pasos.length}` : `${pasos.length} pasos`;
+  document.getElementById("ant").disabled = paso === 0;
+  document.getElementById("sig").disabled = paso === pasos.length;
+
+  const actual = paso ? pasos[paso-1] : null;
+  const nOn = new Set(actual ? actual.n : []), aOn = new Set(actual ? actual.a : []);
+  for (const id in NODO_EL){
+    const {g, badge} = NODO_EL[id];
+    g.classList.toggle("on", nOn.has(id));
+    g.classList.toggle("dim", !!actual && !nOn.has(id) && sel !== id);
+    g.classList.toggle("sel", sel === id);
+    badge.style.display = "none";
+  }
+  for (const id in ARISTA_EL){
+    const {g} = ARISTA_EL[id];
+    g.classList.toggle("on", aOn.has(id));
+    g.classList.toggle("dim", !!actual && !aOn.has(id));
+  }
+  // Numerar en qué paso aparece por primera vez cada pieza (solo vista general)
+  if (!actual){
+    pasos.forEach((p, i) => p.n.forEach(id => {
+      const b = NODO_EL[id];
+      if (b.badge.style.display === "none"){ b.badge.style.display = ""; b.bt.textContent = i+1; }
+    }));
+  }
+
+  if (sel){
+    const n = NODOS[sel];
+    const rel = new Set();
+    ARISTAS.forEach(e => { if (e.de === sel) rel.add(e.a); if (e.a === sel) rel.add(e.de); });
+    panel.innerHTML = `
+      <div class="area">${esc(CARRILES[n.l].n)}</div>
+      <h2>${esc(n.t)}</h2>
+      <div class="archivo">${esc(n.archivo)}</div>
+      ${n.html}
+      ${rel.size ? `<h3>Se conecta con</h3>${chips([...rel])}` : ""}
+      <div><button type="button" class="btn" id="volver">← Volver ${actual ? "al paso " + paso : "a la vista general"}</button></div>`;
+    document.getElementById("volver").onclick = () => { sel = null; render(); };
+  } else if (actual){
+    panel.innerHTML = `
+      <div class="area">Paso ${paso} de ${pasos.length} · ${ruta === "bdd" ? "Ruta BDD" : "Ruta TestNG"}</div>
+      <h2>${esc(actual.t)}</h2>
+      <p>${esc(actual.p)}</p>
+      <pre><code>${esc(actual.code)}</code></pre>
+      <h3>Piezas en este paso</h3>
+      ${chips(actual.n)}`;
+  } else {
+    panel.innerHTML = `
+      <div class="area">Vista general</div>
+      <h2>Cómo leer el mapa</h2>
+      <p>Cada franja es una <b>capa</b>. Las de arriba organizan la ejecución; las de abajo hacen el trabajo con el navegador. Una flecha significa «llama a», «usa» o «hereda de» (<code>extends</code>).</p>
+      <p>El número de cada caja indica en qué paso de la ruta aparece por primera vez.</p>
+      <h3>Idea clave</h3>
+      <p>Los tests (arriba) nunca tocan Selenium directamente: pasan por las páginas (<code>LoginPage</code> → <code>BasePage</code>), y el navegador siempre se obtiene de <code>DriverFactory</code>. Por eso, si cambia la página o el navegador, se corrige en un solo lugar.</p>
+      <div><button type="button" class="btn" id="empezar">Empezar recorrido ▶</button></div>`;
+    document.getElementById("empezar").onclick = () => { paso = 1; render(); };
+  }
+  panel.querySelectorAll("[data-nodo]").forEach(b => b.onclick = () => seleccionar(b.dataset.nodo));
+}
+
+function seleccionar(id){ sel = (sel === id ? null : id); render(); }
+function ir(n){ const max = RUTAS[ruta].length; paso = Math.max(0, Math.min(max, n)); sel = null; render(); }
+
+document.getElementById("ant").onclick = () => ir(paso - 1);
+document.getElementById("sig").onclick = () => ir(paso + 1);
+document.getElementById("inicio").onclick = () => ir(0);
+document.querySelectorAll("[data-ruta]").forEach(b => b.onclick = () => {
+  ruta = b.dataset.ruta; try { localStorage.setItem("arq-ruta", ruta); } catch (e) {}
+  ir(paso ? 1 : 0);
+});
+document.addEventListener("keydown", ev => {
+  if (ev.target.closest && ev.target.closest("input,textarea")) return;
+  if (ev.key === "ArrowRight") ir(paso + 1);
+  if (ev.key === "ArrowLeft") ir(paso - 1);
+  if (ev.key === "Escape" && sel) { sel = null; render(); }
+});
+
+render();
+</script>
+</body>
+</html>
